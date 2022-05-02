@@ -32,14 +32,14 @@ async fn asynchronous_handling() {
 
         for item in vec {
             let caching = &caching;
-            caching.push(item);
+            caching.push(item).await;
         }
     }
     assert!(std::path::Path::new("./test/usage_test.json").exists());
 }
 
 /// `Clone`, `Hash`, `Eq`, `PartialEq`, and `PartialEq` required by misery-rs for caching.
-/// Also, `serde::Serialize` and `serde::deseirialize` must be implemented.
+/// Also, `serde::Serialize` and `serde::deserialize` must be implemented.
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub struct StringId<T> {
     id: String,
@@ -55,7 +55,7 @@ impl<T> StringId<T> {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub struct Article {
-    id: StringId<Article>
+    id: StringId<Article>,
     title: String,
     page: i32
 }
@@ -65,7 +65,7 @@ impl Article {
         where I: Into<String>, S: Into<String> 
     {
         Self { 
-            id: StringId::<Self>::new("abc"),
+            id: StringId::<Self>::new(id),
             title: title.into(),
             page
         }
