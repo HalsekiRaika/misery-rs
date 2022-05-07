@@ -67,7 +67,7 @@ impl<K, V> MiseryHandler<K, V>
         let mut file = Self::open(&self.path).await;
         file.set_len(0).await.expect("");
         let cache_string = serde_json::to_string(&self.caches.read().await.iter().collect::<Vec<_>>())
-            .expect("cannot write to cache file.");
+            .expect("cannot serialize to string");
         let _ = file.write(cache_string.as_ref()).await;
     }
 
