@@ -63,7 +63,7 @@ impl<K, V> MiseryHandler<K, V>
         self.caches.write().await.retain(|cache| cache.as_ref_key() != key);
     }
 
-    pub async fn all(&self) -> Vec<CacheWrapper<K, V>> {
+    pub async fn all_items(&self) -> Vec<CacheWrapper<K, V>> {
         self.caches.read().await.iter().cloned().collect::<Vec<_>>()
     }
 
