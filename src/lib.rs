@@ -63,6 +63,10 @@ impl<K, V> MiseryHandler<K, V>
         self.caches.write().await.retain(|cache| cache.as_ref_key() != key);
     }
 
+    pub async fn all(&self) -> Vec<CacheWrapper<K, V>> {
+        self.caches.read().await.iter().cloned().collect::<Vec<_>>()
+    }
+
     async fn write(&self) {
         let mut file = Self::open(&self.path).await;
         file.set_len(0).await.expect("");
@@ -279,5 +283,39 @@ mod test {
         }
         println!("cache handler dropped.");
         assert!(Path::new("./test/thread_safe_test.json").exists())
+    }
+
+    #[tokio::test]
+    async fn all_method_test() {
+        {
+            let vec = vec![
+                CacheWrapper::new(StringId::<HandlingData>::new("abc"), HandlingData::new("abc", "test_1", 123)),
+                CacheWrapper::new(StringId::<HandlingData>::new("def"), HandlingData::new("def", "test_2", 456)),
+                CacheWrapper::new(StringId::<HandlingData>::new("ghi"), HandlingData::new("ghi", "test_3", 789)),
+                CacheWrapper::new(StringId::<HandlingData>::new("jkm"), HandlingData::new("jkm", "test_4", 321)),
+                CacheWrapper::new(StringId::<HandlingData>::new("nop"), HandlingData::new("nop", "test_5", 654)),
+                CacheWrapper::new(StringId::<HandlingData>::new("qrs"), HandlingData::new("qrs", "test_6", 987)),
+            ];
+
+            let handler = MiseryHandler::<StringId<HandlingData>, HandlingData>::load_from_blocking("./test/all_method_test.json");
+
+
+            futures::stream::iter(vec.iter()).map(|cache| {
+                let handler = &handler;
+                async move {
+                    handler.push(cache.to_owned()).await;
+                    cache
+                }
+            }).buffer_unordered(4)
+                .collect::<Vec<_>>()
+                .await;
+        }
+        println!("cache handler dropped.");
+        assert!(Path::new("./test/thread_safe_test.json").exists());
+
+        {
+            let handler = MiseryHandler::<StringId<HandlingData>, HandlingData>::load_from_blocking("./test/all_method_test.json");
+            handler.all().await.iter().for_each(|item| println!("{:?}", item.as_ref_key()));
+        }
     }
 }
